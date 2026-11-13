@@ -1,0 +1,39 @@
+name: Stock VPS OVHcloud
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      plans:
+        description: "Offres (planCode, séparés par des virgules)"
+        default: "vps-2027-model4,vps-2027-model3"
+      datacenters:
+        description: "Datacenters (GRA, SBG, EU-WEST-RBX…)"
+        default: "GRA,SBG,EU-WEST-RBX"
+      os:
+        description: "linux ou windows (windows sert à tester l'alerte)"
+        default: "linux"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Vérifier le stock (échec = VPS disponible)
+        env:
+          PLANS: ${{ inputs.plans }}
+          DATACENTERS: ${{ inputs.datacenters }}
+          STOCK_OS: ${{ inputs.os }}
+        run: node check-stock.mjs
